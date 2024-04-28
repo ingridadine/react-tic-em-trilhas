@@ -1,14 +1,19 @@
 import { useAppContext } from '../../hooks';
+import { Loading } from '../Loading';
 import style from './ListaTarefas.module.css';
 import { ListaTarefasItem } from './ListaTarefasItem';
 
 const ListaTarefas = () => {
-    const { tarefas } = useAppContext();
+    const { tarefas, loadingCarregar } = useAppContext();
     
 
     return (
         <ul className={style.ListaTarefas}>
-            {!tarefas.length && (
+            {loadingCarregar && (
+                <p>Carregando... <Loading/></p>
+            )}
+
+            {!loadingCarregar && !tarefas.length && (
                 <p>Não há tarefas cadastradas :C</p>
             )}
 

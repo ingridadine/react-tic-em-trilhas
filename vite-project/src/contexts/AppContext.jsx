@@ -1,4 +1,5 @@
-import { createContext, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
+import { api } from '../services';
 
 export const AppContext = createContext({});
 
@@ -7,28 +8,45 @@ export const AppContextProvider = (props) => {
 
     const [criador, setCriador] = useState('Dinyxia');
 
-    const [tarefas, setTarefas] = useState ([
-        { id: 1, nome: 'Item 1'},
-        { id: 2, nome: 'Item 2'},
-        { id: 3, nome: 'Item 3'},
-    ]);   
+    const [tarefas, setTarefas] = useState ([]);   
 
-    const adicionarTarefa = (nomeTarefa) => {
+    const [loadingCriar, setLoadingCriar] = useState(false);
+    const [loadingEditar, setLoadingEditar] = useState(null);
+    const [loadingDeletar, setLoadingDeletar] = useState(null);
+    const [loadingCarregar, setLoadingCarregar] = useState(false);
+
+    const carregarTarefas = async () => {
+        setLoadingCarregar(true);
+
+        const { data = [] } = await api.get('/tarefas');
+
+        setTarefas([
+            ...data,
+        ]);
+
+        setLoadingCarregar(false);
+    };
+
+    
+    const adicionarTarefa = async (nomeTarefa) => {
+        setLoadingCriar(true);
+        const { data: tarefa } = await api.post('/tarefas', {
+            nome: nomeTarefa,
+        });
         setTarefas(estadoAtual => {
-            const tarefa = {
-                id: estadoAtual.length +1,
-                nome: nomeTarefa,
-            };
-
-
             return [
                 ...estadoAtual,
                 tarefa,
             ];
         });
+        setLoadingCriar(false);
     };
 
-    const removerTarefa = (idTarefa) => {
+    const removerTarefa = async (idTarefa) => {
+        setLoadingDeletar(idTarefa);
+        api.delete(`tarefas/${idTarefa}`);
+
+
         setTarefas(estadoAtual => {
             const tarefasAtualizadas = estadoAtual.filter(tarefa => tarefa.id != idTarefa);
 
@@ -36,15 +54,22 @@ export const AppContextProvider = (props) => {
                 ...tarefasAtualizadas,
             ]
         });
+        setLoadingDeletar(null);
 
     };
 
-    const editarTarefa = (idTarefa, nomeTarefa) => {
+    const editarTarefa = async (idTarefa, nomeTarefa) => {
+        setLoadingEditar(idTarefa);
+        
+        const { data: tarefaAtualizada } = await api.put(`tarefas/${idTarefa}`,{
+            nome: nomeTarefa,
+        });
+
         setTarefas(estadoAtual => {
             const tarefasAtualizadas = estadoAtual.map(tarefa => {
                 return tarefa.id == idTarefa ? {
                     ...tarefa,
-                    nome: nomeTarefa,
+                    nome: tarefaAtualizada.nome,
                 } : tarefa;
             });
 
@@ -52,7 +77,12 @@ export const AppContextProvider = (props) => {
                 ...tarefasAtualizadas,
             ];
         });
+        setLoadingEditar(null);
     };
+
+    useEffect(() => {
+        carregarTarefas();
+    }, []);
 
     return (
         <AppContext.Provider value={{
@@ -61,6 +91,10 @@ export const AppContextProvider = (props) => {
             adicionarTarefa,
             removerTarefa,
             editarTarefa, 
+            loadingCriar,
+            loadingEditar,
+            loadingDeletar,
+            loadingCarregar,
 
         }}>
             { children }

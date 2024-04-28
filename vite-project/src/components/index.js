@@ -11,3 +11,5 @@ export * from './CampoTexto';
 export * from './Botao';
 
 export * from './ListaTarefas';
+
+export * from './Loading';
